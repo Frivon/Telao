@@ -1,0 +1,29 @@
+:root { --accent:#FF7A00; --amber:#FFB000; --ink:#0B0B0B; --text:#F2F2F2; --muted:#8C8C8C; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--text);
+  font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif; user-select: none; cursor: none; }
+#stage, #player, #player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.layer { position: absolute; inset: 0; }
+.hidden { display: none !important; }
+
+#idle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh;
+  background: radial-gradient(ellipse at 50% 115%, #3a1c00 0%, var(--ink) 62%); z-index: 5; }
+#idle .palm { height: 30vh; opacity: .9; }
+#idle h1 { font-size: 7vh; font-weight: 700; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+#idle p { font-size: 3vh; color: var(--muted); }
+.waves { position: absolute; left: 0; right: 0; bottom: 0; height: 7vh; display: flex; flex-direction: column; justify-content: flex-end; gap: .8vh; padding-bottom: 1.4vh; }
+.waves i { display: block; height: .5vh; background: linear-gradient(90deg, transparent, var(--amber), var(--accent), transparent); opacity: .5; }
+.waves i:nth-child(2) { opacity: .3; margin: 0 8%; } .waves i:nth-child(3) { opacity: .15; margin: 0 16%; }
+
+#hud { z-index: 6; pointer-events: none; display: flex; align-items: flex-end; background: linear-gradient(0deg, rgba(0,0,0,.75), transparent 28%); animation: hudfade 7s forwards; }
+#hud b { margin: 0 4% 3vh; font-size: 3.6vh; border-left: .7vh solid var(--accent); padding-left: 1.6vh; text-shadow: 0 .2vh .8vh #000; max-width: 92%; }
+@keyframes hudfade { 0%,85% { opacity: 1 } 100% { opacity: 0 } }
+#pausebadge { position: absolute; z-index: 7; right: 3%; top: 4%; background: var(--accent); color: #000; padding: .8vh 2vh; font-size: 3vh; font-weight: 700; border-radius: .6vh; }
+
+#test { z-index: 20; background: #101010; display: flex; align-items: center; justify-content: center; }
+#test .bars { position: absolute; inset: 0 0 62% 0; display: flex; } #test .bars i { flex: 1; }
+#test .edge { position: absolute; font-size: 3.4vh; color: var(--amber); }
+#test .top { top: 66%; left: 50%; transform: translateX(-50%); } #test .bottom { bottom: 2%; left: 50%; transform: translateX(-50%); }
+#test .left { left: 2%; top: 50%; } #test .right { right: 2%; top: 50%; }
+#test .center { text-align: center; margin-top: 18vh; }
+#test h2 { font-size: 6vh; color: var(--accent); } #test p { font-size: 3vh; margin-top: 1vh; color: var(--text); }
