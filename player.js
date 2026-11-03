@@ -8,12 +8,22 @@
     var i = p.indexOf('='); if (i > 0) Q[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1));
   });
   var SID = Q.sid || '0', BRIDGE = Q.bridge || '', IS_CHILD = window.parent !== window;
+  /* Modo REMOTO (r=1): o MTA abre esta página como browser remoto e NÃO consegue executar JS nela.
+     Comandos chegam pela URL (v=ID&t=pos&p=1&test=1) e as respostas voltam pelo document.title ("TC|token|evento|sid|a|b|c"). */
+  var REMOTE = Q.r === '1' && !IS_CHILD;
+  var evq = [], evN = 0, NONCE = Math.random().toString(36).slice(2, 8);
+  if (REMOTE) setInterval(function () {
+    var e = evq.shift(); if (!e) return;
+    evN++;
+    document.title = 'TC|' + NONCE + ':' + evN + '|' + e.map(function (x) { return encodeURIComponent(String(x)); }).join('|');
+  }, 400);
   var ID_RE = /^[A-Za-z0-9_-]{11}$/;
   var ALLOWED = { ready: 1, meta: 1, ended: 1, error: 1, warn: 1, apitimeout: 1 };
   var $ = function (id) { return document.getElementById(id); };
 
   function emit(name, a, b, c) {
     var args = [a === undefined ? '' : a, b === undefined ? '' : b, c === undefined ? '' : c];
+    if (REMOTE) { evq.push([name, SID, args[0], args[1], args[2]]); return; }
     if (IS_CHILD) { try { parent.postMessage({ tc: 1, kind: 'evt', name: name, args: args }, '*'); } catch (e) {} return; }
     try { if (window.mta && mta.triggerEvent) mta.triggerEvent('tc_telao:browser', name, SID, args[0], args[1], args[2]); } catch (e) {}
   }
@@ -67,7 +77,7 @@
         onStateChange: onState,
         onError: function (e) {
           var m = 'Erro do YouTube ' + e.data;
-          if (e.data === 153 || e.data === 150 || e.data === 101 || e.data === 152) m += ' (precisa da ponte HTTPS: Config.Player.bridgeUrl)';
+          if (e.data === 153) m += ' (origem/referer recusado)'; else if (e.data === 150 || e.data === 101 || e.data === 152) m += ' (vídeo não permite incorporação)';
           setIdle(true, m);
           if (cur.id) emit('error', cur.id, e.data);
         }
@@ -169,6 +179,15 @@
     frame.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;z-index:50';
     document.body.appendChild(frame);
   }
+  if (frame) {
+    var gotChild = false;
+    window.addEventListener('message', function (ev) { if (frame && ev.source === frame.contentWindow) gotChild = true; });
+    setTimeout(function () {
+      if (gotChild) return;
+      if (frame.parentNode) frame.parentNode.removeChild(frame);
+      setIdle(true, 'A ponte HTTPS não respondeu. Confira Config.Player.bridgeUrl (abre no navegador?) e o GitHub Pages');
+    }, 10000);
+  }
   window.addEventListener('message', function (ev) {
     var d = ev.data; if (!d || d.tc !== 1) return;
     if (IS_CHILD && ev.source === parent && d.kind === 'cmd' && impl[d.fn]) impl[d.fn].apply(null, d.args || []);
@@ -188,6 +207,14 @@
   });
   window.TC = TC;
 
-  function boot() { if (frame) return; /* no modo ponte, quem avisa 'ready' é a página filha */ setIdle(true, 'Sem transmissão'); emit('ready'); }
+  function boot() {
+    if (frame) return; /* no modo ponte, quem avisa 'ready' é a página filha */
+    setIdle(true, 'Sem transmissão'); emit('ready');
+    if (REMOTE) {
+      vol = 100;   // o volume real é controlado pelo MTA (setBrowserVolume)
+      if (Q.test === '1') impl.test(true);
+      if (Q.v) impl.play(Q.v, Q.t, Q.p === '1');
+    }
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
